@@ -97,20 +97,25 @@ if __name__ == '__main__':
                     ID += 1
                     print('ID: ', ID)
                     # question, ok
-                    str_q = question['text'][:question['text'].find('\"')]
-                    print(str_q)
-                    str_q, quan_map = Normalize(str_q, mode)
-                    # equations
-                    eq = re.sub('\r\n', '', question['equations'])
-                    eq = '\n'.join(re.findall(r'(?<![equ:])[\w\s\+\-\*\/]+=[\w\s\+\-\*\/]+(?![qu:])', eq))
                     try:
+                        label = 'original_text' if question['original_text'][0] == '\"' else 'text'
+                        idx = question[label].find('\"')
+                        str_q = question[label][0:idx]
+                        str_q = re.sub('\r', '', str_q)
+                        if idx == -1:
+                            print('idx is -1, string processing is invalid!')
+                            exit(-1)
+                        print(idx, str_q)
+                        str_q, quan_map = Normalize(str_q, mode)
+                        # equations
+                        eq = re.sub('\r\n', '', question['equations'])
+                        eq = '\n'.join(re.findall(r'(?<![equ:])[\w\s\+\-\*\/]+=[\w\s\+\-\*\/]+(?![qu:])', eq))
                         nor_eq = Extract(eq, quan_map, mode)
+                        # Solutions
+                        ans = [ lambda x: int(x) for x in re.findall(r'\d+', question['ans']) ]
                     except:
                         continue
-                    # Solutions
-                    ans = [ lambda x: int(x) for x in re.findall(r'\d+', question['ans']) ]
-
                     problemList.append((ID, str_q, nor_eq, ans))
-                   
+                    
         with open(os.path.join(Dir, output_file), 'w') as json_file:
             json_file.write(json.dumps(createData(problemList), ensure_ascii=False, indent=2))
